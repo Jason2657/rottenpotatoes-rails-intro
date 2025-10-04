@@ -8,8 +8,34 @@ class MoviesController < ApplicationController
 
   def index
     @all_ratings = Movie.all_ratings
-    @ratings_to_show = params[:ratings].present? ? params[:ratings].keys : @all_ratings
-    @sort_by = params[:sort_by]
+    # Determine ratings to show
+    if params.key?(:ratings)
+      # User explicitly submitted the form
+      if params[:ratings].present?
+        # Some ratings were checked
+        @ratings_to_show = params[:ratings].keys
+      else
+        # No ratings were checked - show all
+        @ratings_to_show = @all_ratings
+      end
+      session[:ratings] = @ratings_to_show
+    elsif session[:ratings].present?
+      # Restore from session
+      @ratings_to_show = session[:ratings]
+    else
+      # Default: show all ratings
+      @ratings_to_show = @all_ratings
+    end
+
+    # Determine sort order
+    if params[:sort_by].present?
+      @sort_by = params[:sort_by]
+      session[:sort_by] = @sort_by
+    elsif session[:sort_by].present?
+      @sort_by = session[:sort_by]
+    end
+
+    # Get filtered and sorted movies
     @movies = Movie.with_ratings(@ratings_to_show)
     @movies = @movies.order(@sort_by) if @sort_by.present?
   end
